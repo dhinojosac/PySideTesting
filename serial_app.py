@@ -2,6 +2,9 @@
 import sys, serial
 from PySide.QtGui import *
 
+test_lora = False
+test_gps  = False
+
 def serial_ports():
     """ Lists serial port names
         :raises EnvironmentError:
@@ -142,6 +145,7 @@ class MainWindow(QMainWindow):
 
 
     def clickLoraTest(self):
+        global test_lora
         self.checkSamePorts("LORA")
         print "Click test lora"
         text = str(self.ports_cb_lora.currentText())
@@ -155,14 +159,19 @@ class MainWindow(QMainWindow):
             self.icon_lora_lbl.setPixmap(self.pixmap1)
             self.icon_lora_lbl.show()
             self.result_lora_lbl.setText("PASSED")
+            
         else:
             self.myIcon1 = QIcon("failed.png")
             self.pixmap1 = self.myIcon1.pixmap(40, 40, QIcon.Active, QIcon.On)
             self.icon_lora_lbl.setPixmap(self.pixmap1)
             self.icon_lora_lbl.show()
             self.result_lora_lbl.setText("FAILED")
+        test_lora = True
+        self.checkallTest()
+
     
     def clickGpsTest(self):
+        global test_gps
         self.checkSamePorts("GPS")
         print "Click test lora"
         text = str(self.ports_cb_gps.currentText())
@@ -183,6 +192,17 @@ class MainWindow(QMainWindow):
             self.icon_gps_lbl.setPixmap(self.pixmap2)
             self.icon_gps_lbl.show()
             self.result_gps_lbl.setText("FAILED")
+        test_gps = True
+        self.checkallTest()
+
+    def checkallTest(self):
+        if test_lora and test_gps:
+            txt_lora = self.result_lora_lbl.text()
+            txt_gps = self.result_lora_lbl.text()
+            if txt_lora=="PASSED" and txt_gps=="PASSED":
+                self.myStatusBar.showMessage("TEST NODE PASSED!", 10000)
+            
+
     
     def changesPorts(self):
         numPorts = self.ports_cb_lora.count()
