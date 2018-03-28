@@ -30,11 +30,14 @@ def serial_ports():
     return result
 
 def testSerial(mType, mSerial, mBaudrate):
-    ser = serial.Serial(mSerial, mBaudrate)
-    if mType=="LORA":
-        ser.write("sys get ver\r\n")
-    result= ser.readline()
-    ser.close()
+    try:
+        ser = serial.Serial(mSerial, mBaudrate,timeout=2)
+        if mType=="LORA":
+            ser.write("sys get ver\r\n")
+        result= ser.readline()
+        ser.close()
+    except:
+        result = "Error"
     return result
 
 
@@ -122,6 +125,8 @@ class MainWindow(QMainWindow):
         self.icon_gps_lbl.move(300,190)
         self.myIcon1 = QIcon()
         self.myIcon2 = QIcon()
+        #sort ports
+        self.changesPorts()
         
         
         
@@ -165,7 +170,8 @@ class MainWindow(QMainWindow):
         res=testSerial("GPS",text,9600)
         print "Response:", res
         self.myStatusBar.showMessage(res, 5000)
-        if "$GN" or "$GP" or "$GL" in res:
+        test = ["$GN", "$GP", "$GL"]
+        if any(x in res for x in test):
             self.myIcon2 = QIcon("passed.png")
             self.pixmap2 = self.myIcon2.pixmap(40, 40, QIcon.Active, QIcon.On)
             self.icon_gps_lbl.setPixmap(self.pixmap2)
@@ -177,6 +183,14 @@ class MainWindow(QMainWindow):
             self.icon_gps_lbl.setPixmap(self.pixmap2)
             self.icon_gps_lbl.show()
             self.result_gps_lbl.setText("FAILED")
+    
+    def changesPorts(self):
+        numPorts = self.ports_cb_lora.count()
+        if numPorts>1:
+            id_port_lora=self.ports_cb_lora.setCurrentIndex(0)
+            id_port_gps =self.ports_cb_gps.setCurrentIndex(1)
+        print numPorts
+
     
     def checkSamePorts(self,source):
         portLora =str(self.ports_cb_lora.currentText())
