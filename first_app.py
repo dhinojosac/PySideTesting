@@ -16,10 +16,10 @@ class SampleWindow(QWidget):
 		self.setMinimumWidth(250)
 		self.setMaximumHeight(200)
 		self.setMaximumWidth(800)
-		#icon --
+		#Function to set icon
 		appIcon = QIcon('uart.png')
 		self.setWindowIcon(appIcon)
-		#--
+		
 		self.show()
 		print("Sample Window show in the GUI\n")
 
