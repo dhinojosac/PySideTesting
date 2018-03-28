@@ -31,7 +31,8 @@ def serial_ports():
 
 def testSerial(mType, mSerial, mBaudrate):
     ser = serial.Serial(mSerial, mBaudrate)
-    ser.write("sys get ver\r\n")
+    if mType=="LORA":
+        ser.write("sys get ver\r\n")
     result= ser.readline()
     ser.close()
     return result
@@ -49,7 +50,7 @@ class MainWindow(QMainWindow):
     def initGUI(self):
         self.setWindowTitle("ManglarNode Tester")
         self.setWindowIcon(QIcon('uart.png'))
-        self.setGeometry(300, 250, 400, 250)
+        self.setGeometry(300, 250, 380, 270)
         self.SetupComponents()
         self.show()
 
@@ -101,10 +102,10 @@ class MainWindow(QMainWindow):
         self.gps_lbl = QLabel('GPS', self)
         self.gps_lbl.move(10, 190) # offset the first control 5px
         #add result test rn2903 label 
-        self.result_lora_lbl = QLabel('N.A.', self)
+        self.result_lora_lbl = QLabel('', self)
         self.result_lora_lbl.move(240, 80) # offset the first control 5px
         #add result test gps label
-        self.result_gps_lbl = QLabel('N.A.', self)
+        self.result_gps_lbl = QLabel('', self)
         self.result_gps_lbl.move(240, 190) # offset the first control 5px
         #add button to test lora
         self.lora_btn = QPushButton('TEST', self)
@@ -115,8 +116,12 @@ class MainWindow(QMainWindow):
         self.gps_btn.clicked.connect(self.clickGpsTest)
         self.gps_btn.move(70, 190) # offset the first control 5px
         #add icons results
-        self.myLabel1 = QLabel('', self)
-        self.myLabel1.move(300,80)
+        self.icon_lora_lbl = QLabel('', self)
+        self.icon_lora_lbl.move(300,80)
+        self.icon_gps_lbl = QLabel('', self)
+        self.icon_gps_lbl.move(300,190)
+        self.myIcon1 = QIcon()
+        self.myIcon2 = QIcon()
         
         
         
@@ -125,44 +130,96 @@ class MainWindow(QMainWindow):
         self.fileMenu.addAction(self.newAction)
         self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.exitAction)
-        self.editMenu.addAction(self.copyAction)
+        #self.editMenu.addAction(self.copyAction)
         self.fileMenu.addSeparator()
-        self.editMenu.addAction(self.pasteAction)
+        #self.editMenu.addAction(self.pasteAction)
         self.helpMenu.addAction(self.aboutAction)
 
 
     def clickLoraTest(self):
+        self.checkSamePorts("LORA")
+        print "Click test lora"
         text = str(self.ports_cb_lora.currentText())
+        print "port:",text
         res=testSerial("LORA",text,57600)
+        print "Response:", res
+        self.myStatusBar.showMessage(res, 5000)
         if "RN2903" in res:
             self.myIcon1 = QIcon("passed.png")
             self.pixmap1 = self.myIcon1.pixmap(40, 40, QIcon.Active, QIcon.On)
-            self.myLabel1.setPixmap(self.pixmap1)
-            self.myLabel1.show()
+            self.icon_lora_lbl.setPixmap(self.pixmap1)
+            self.icon_lora_lbl.show()
             self.result_lora_lbl.setText("PASSED")
         else:
             self.myIcon1 = QIcon("failed.png")
             self.pixmap1 = self.myIcon1.pixmap(40, 40, QIcon.Active, QIcon.On)
-            self.myLabel1.setPixmap(self.pixmap1)
-            self.myLabel1.show()
+            self.icon_lora_lbl.setPixmap(self.pixmap1)
+            self.icon_lora_lbl.show()
             self.result_lora_lbl.setText("FAILED")
     
     def clickGpsTest(self):
+        self.checkSamePorts("GPS")
+        print "Click test lora"
         text = str(self.ports_cb_gps.currentText())
-        testSerial("GPS",text,9600)
-        self.result_gps_lbl.setText(text)
+        print "port:",text
+        res=testSerial("GPS",text,9600)
+        print "Response:", res
+        self.myStatusBar.showMessage(res, 5000)
+        if "$GN" or "$GP" or "$GL" in res:
+            self.myIcon2 = QIcon("passed.png")
+            self.pixmap2 = self.myIcon2.pixmap(40, 40, QIcon.Active, QIcon.On)
+            self.icon_gps_lbl.setPixmap(self.pixmap2)
+            self.icon_gps_lbl.show()
+            self.result_gps_lbl.setText("PASSED")
+        else:
+            self.myIcon2 = QIcon("failed.png")
+            self.pixmap2 = self.myIcon2.pixmap(40, 40, QIcon.Active, QIcon.On)
+            self.icon_gps_lbl.setPixmap(self.pixmap2)
+            self.icon_gps_lbl.show()
+            self.result_gps_lbl.setText("FAILED")
+    
+    def checkSamePorts(self,source):
+        portLora =str(self.ports_cb_lora.currentText())
+        portGps =str(self.ports_cb_gps.currentText())
+        if portLora==portGps:
+            if source=="LORA":
+                self.ports_cb_gps.setEnabled(False)
+                self.gps_btn.setEnabled(False)
+            else:
+                self.ports_cb_lora.setEnabled(False)
+                self.lora_btn.setEnabled(False)
+        
+            
 
     # Slots called when the menu actions are triggered
     def newFile(self):
-        pass
+        self.result_lora_lbl.setText("")
+        self.result_gps_lbl.setText("")
+        self.icon_lora_lbl.setText("")
+        #restart icon result lora
+        self.myIcon1= QIcon()
+        self.pixmap1 = self.myIcon1.pixmap(40, 40, QIcon.Active, QIcon.On)
+        self.icon_lora_lbl.setPixmap(self.pixmap1)
+        self.icon_lora_lbl.show()
+        #restart icon result gps
+        self.myIcon2= QIcon()
+        self.pixmap2 = self.myIcon2.pixmap(40, 40, QIcon.Active, QIcon.On)
+        self.icon_gps_lbl.setPixmap(self.pixmap2)
+        self.icon_gps_lbl.show()
+        #restart gps button and combobox
+        self.ports_cb_gps.setEnabled(True)
+        self.gps_btn.setEnabled(True)
+        #restart lora button and combobox
+        self.ports_cb_lora.setEnabled(True)
+        self.lora_btn.setEnabled(True)
+        self.repaint()
 
     def exitFile(self):
         self.close()
 
     def aboutHelp(self):
-        QMessageBox.about(self, "About Simple Text Editor",
-        "This example demonstrates the use "
-        "of Menu Bar")
+        QMessageBox.about(self, "About ManglarNodeTester",
+        "This program was built to test the boards of manglar nodes.\n\n dhinojosac@gmail.com\n28-03-2018")
 
     def CreateActions(self):
         """ Function to create actions for menus
@@ -174,6 +231,7 @@ class MainWindow(QMainWindow):
             self, shortcut="Ctrl+Q",
             statusTip="Exit the Application",
             triggered=self.exitFile)
+        ''' 
         self.copyAction = QAction( QIcon('copy.png'), 'C&opy',
             self, shortcut="Ctrl+C",
             statusTip="Copy",
@@ -182,6 +240,7 @@ class MainWindow(QMainWindow):
             self, shortcut="Ctrl+V",
             statusTip="Paste",
             triggered=self.showMinimized)
+        '''
         self.aboutAction = QAction( QIcon('about.png'), 'A&bout',
             self, statusTip="Displays info about text editor",
             triggered=self.aboutHelp)
@@ -191,7 +250,7 @@ class MainWindow(QMainWindow):
         """ Function to create actual menu bar
         """
         self.fileMenu = self.menuBar().addMenu("&File")
-        self.editMenu = self.menuBar().addMenu("&Edit")
+        #self.editMenu = self.menuBar().addMenu("&Edit")
         self.helpMenu = self.menuBar().addMenu("&Help")
 
 if __name__ == '__main__':
@@ -201,6 +260,7 @@ if __name__ == '__main__':
         myApp = QApplication(sys.argv)
         myApp.setStyle(QStyleFactory.create("plastique"))
         mainWindow = MainWindow()
+        mainWindow.setFixedSize(380,270)
         myApp.exec_()
         sys.exit(0)
     except NameError:
